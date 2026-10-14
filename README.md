@@ -1,36 +1,24 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Rate Your Day
 
-## Getting Started
+Rate each day (Awful, Bad, Okay, Good, Great) and see your days in color — Day, Week, Month and Year views.
+Installable, offline-first PWA. Data stays in your browser (IndexedDB); export a JSON backup from Settings.
 
-First, run the development server:
+## Rules
+- Only **today** can be rated; you can change it until local midnight. Past days are read-only.
+- Colors: Awful red · Bad orange · Okay yellow · Good lime · Great green · gray = not rated. (Stored internally as 1–5.) Weeks start Monday.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+## Develop
+```sh
+npm install
+npm run dev      # http://localhost:3000 (service worker disabled in dev)
+npm test         # unit tests (Vitest + fake-indexeddb)
+npm run build    # static export to out/, with service worker
+npx serve out    # test the PWA / offline locally
+npm run icons    # regenerate PNG icons from public/icons/icon.svg
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Structure
+- `src/lib/entries.ts` — the only data access layer (`upsertToday` enforces the today-only rule; import/export merge by `updatedAt`). Future sync plugs in here.
+- `src/lib/dates.ts` — local `YYYY-MM-DD` keys, Monday-start weeks, month grid and year heatmap layout.
+- `src/lib/colors.ts` — rating → color map.
+- `src/app/{day,week,month,year,settings}` — views; `src/app/sw.ts` — Serwist service worker.
