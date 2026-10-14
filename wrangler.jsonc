@@ -1,0 +1,12 @@
+// Static site: `npm run build` exports to out/, Wrangler uploads it as Worker static assets.
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "rate-your-day",
+  "compatibility_date": "2026-10-01",
+  "assets": {
+    "directory": "./out",
+    // Serve /day from day.html
+    "html_handling": "auto-trailing-slash",
+    "not_found_handling": "404-page"
+  }
+}
