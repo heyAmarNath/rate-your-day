@@ -8,7 +8,13 @@ export const metadata: Metadata = {
   description: "Rate each day from 1 to 5 and see your days in color.",
   applicationName: "Rate Your Day",
   appleWebApp: { capable: true, title: "Rate Your Day", statusBarStyle: "default" },
-  icons: { icon: "/icons/icon-192.png", apple: "/icons/apple-touch-icon.png" },
+  icons: {
+    icon: [
+      { url: "/icons/icon.svg", type: "image/svg+xml" },
+      { url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
+    ],
+    apple: "/icons/apple-touch-icon.png",
+  },
 };
 
 export const viewport: Viewport = {

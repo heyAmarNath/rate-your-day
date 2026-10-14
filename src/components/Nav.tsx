@@ -17,13 +17,15 @@ export function Nav() {
 
   return (
     <>
-      {/* Desktop: top bar */}
-      <header className="hidden border-b border-border bg-surface sm:block">
-        <div className="mx-auto flex max-w-4xl items-center justify-between px-4 py-3">
-          <Link href="/day" className="font-semibold tracking-tight">
+      {/* Top bar: brand on all sizes, links on desktop only */}
+      <header className="border-b border-border bg-surface pt-[env(safe-area-inset-top)]">
+        <div className="mx-auto flex max-w-4xl items-center justify-between px-4 py-2.5 sm:py-3">
+          <Link href="/day" className="flex items-center gap-2 font-semibold tracking-tight">
+            {/* eslint-disable-next-line @next/next/no-img-element -- static export, tiny SVG */}
+            <img src="/icons/icon.svg" alt="" width={28} height={28} className="size-7" />
             Rate Your Day
           </Link>
-          <nav className="flex gap-1">
+          <nav className="hidden gap-1 sm:flex">
             {LINKS.map((l) => (
               <Link
                 key={l.href}
