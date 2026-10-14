@@ -1,4 +1,5 @@
 # Rate Your Day
+[Try](https://rate-your-day.amarsite.workers.dev/day)
 
 Rate each day (Awful, Bad, Okay, Good, Great) and see your days in color — Day, Week, Month and Year views.
 Installable, offline-first PWA. Data stays in your browser (IndexedDB); export a JSON backup from Settings.
