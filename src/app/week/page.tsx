@@ -30,14 +30,13 @@ function WeekView({ today }: { today: string }) {
   return (
     <>
       <PeriodNav
-        label={offset === 0 ? "This week" : label}
+        label={label}
         onPrev={() => setOffset((o) => o - 1)}
         onNext={() => setOffset((o) => o + 1)}
         onToday={() => setOffset(0)}
         nextDisabled={offset >= 0}
         isCurrent={offset === 0}
       />
-      {offset === 0 && <p className="-mt-3 mb-5 text-sm text-muted">{label}</p>}
       <div className="grid grid-cols-7 gap-1.5 sm:gap-3">
         {days.map((d) => {
           const key = toKey(d);
