@@ -19,7 +19,7 @@ function WeekView({ today }: { today: string }) {
   const anchor = addWeeks(fromKey(today), offset);
   const days = weekDays(anchor);
   const entries = useRange(toKey(days[0]), toKey(days[6]));
-  const { onDayClick, sheet } = useDayClick(today);
+  const onDayClick = useDayClick(today);
 
   const start = startOfWeek(anchor, WEEK_OPTS);
   const end = endOfWeek(anchor, WEEK_OPTS);
@@ -54,7 +54,6 @@ function WeekView({ today }: { today: string }) {
         })}
       </div>
       <Legend />
-      {sheet}
     </>
   );
 }

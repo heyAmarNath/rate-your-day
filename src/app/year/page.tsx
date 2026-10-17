@@ -22,7 +22,7 @@ function YearView({ today }: { today: string }) {
   const [year, setYear] = useState(currentYear);
   const weeks = useMemo(() => yearWeeks(year), [year]);
   const entries = useRange(`${year}-01-01`, `${year}-12-31`);
-  const { onDayClick, sheet } = useDayClick(today);
+  const onDayClick = useDayClick(today);
   const scroller = useRef<HTMLDivElement>(null);
 
   // On narrow screens the heatmap scrolls; bring the current week into view.
@@ -106,7 +106,6 @@ function YearView({ today }: { today: string }) {
         </div>
       </div>
       <Legend />
-      {sheet}
     </>
   );
 }

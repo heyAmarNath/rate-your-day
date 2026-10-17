@@ -17,20 +17,21 @@ export function getRange(from: string, to: string): Promise<DayEntry[]> {
 
 export class LockedDayError extends Error {
   constructor(date: string) {
-    super(`Only today can be rated (tried ${date})`);
+    super(`Future days can't be rated (tried ${date})`);
     this.name = "LockedDayError";
   }
 }
 
-export type TodayInput = { rating: Rating; emoji?: string; note?: string };
+export type DayInput = { rating: Rating; emoji?: string; note?: string };
 
-/** The only write path from the UI: enforces the "today only" rule. */
-export async function upsertToday(
+/** The only write path from the UI: today and any past day; future days are rejected. */
+export async function upsertDay(
   date: string,
-  input: TodayInput,
+  input: DayInput,
   now: Date = new Date(),
 ): Promise<DayEntry> {
-  if (date !== todayKey(now)) throw new LockedDayError(date);
+  if (!isValidKey(date)) throw new Error(`Invalid date: ${date}`);
+  if (date > todayKey(now)) throw new LockedDayError(date);
   if (!isRating(input.rating)) throw new Error("Rating must be 1–5");
 
   const ts = now.getTime();
@@ -79,7 +80,6 @@ function parseEntry(raw: unknown): DayEntry | null {
 
 /**
  * Restores a backup. Merges by date: the entry with the newer updatedAt wins.
- * This is the one path allowed to write past days.
  */
 export async function importAll(data: unknown): Promise<ImportResult> {
   if (!data || typeof data !== "object" || !Array.isArray((data as ExportFile).entries)) {

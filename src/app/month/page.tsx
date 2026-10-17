@@ -21,7 +21,7 @@ function MonthView({ today }: { today: string }) {
   const anchor = addMonths(fromKey(today), offset);
   const days = monthGridDays(anchor);
   const entries = useRange(toKey(days[0]), toKey(days[days.length - 1]));
-  const { onDayClick, sheet } = useDayClick(today);
+  const onDayClick = useDayClick(today);
 
   return (
     <>
@@ -56,7 +56,6 @@ function MonthView({ today }: { today: string }) {
         </div>
         <Legend />
       </div>
-      {sheet}
     </>
   );
 }

@@ -1,31 +1,36 @@
 "use client";
 
 import { addDays, format } from "date-fns";
-import { useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useState } from "react";
 import { EmojiPicker } from "@/components/EmojiPicker";
 import { PeriodNav } from "@/components/PeriodNav";
 import { RatingPicker } from "@/components/RatingPicker";
 import { ratingColor, RATING_LABELS, type Rating } from "@/lib/colors";
-import { fromKey, toKey } from "@/lib/dates";
-import { NOTE_MAX, upsertToday, type DayEntry } from "@/lib/entries";
+import { fromKey, isValidKey, toKey } from "@/lib/dates";
+import { NOTE_MAX, upsertDay, type DayEntry } from "@/lib/entries";
 import { useEntry, useToday } from "@/lib/useEntries";
 
 export default function DayPage() {
   const today = useToday();
-  return today ? <DayView today={today} /> : null;
+  // useSearchParams needs a Suspense boundary in a static export.
+  return today ? (
+    <Suspense>
+      <DayView today={today} />
+    </Suspense>
+  ) : null;
 }
 
+/** Shows ?date=YYYY-MM-DD, or today (following midnight rollover) when absent. */
 function DayView({ today }: { today: string }) {
-  // null = follow today (also rolls over at midnight)
-  const [picked, setPicked] = useState<string | null>(null);
-  const date = picked ?? today;
+  const router = useRouter();
+  const param = useSearchParams().get("date");
+  const date = param && isValidKey(param) && param < today ? param : today;
   const isToday = date === today;
   const entry = useEntry(date);
 
-  const go = (delta: number) => {
-    const next = toKey(addDays(fromKey(date), delta));
-    setPicked(next >= today ? null : next);
-  };
+  const show = (key: string) => router.replace(key >= today ? "/day" : `/day?date=${key}`);
+  const go = (delta: number) => show(toKey(addDays(fromKey(date), delta)));
 
   return (
     <div className="mx-auto max-w-xl">
@@ -33,15 +38,11 @@ function DayView({ today }: { today: string }) {
         label={isToday ? "Today" : format(fromKey(date), "EEE, MMM d, yyyy")}
         onPrev={() => go(-1)}
         onNext={() => go(1)}
-        onToday={() => setPicked(null)}
+        onToday={() => show(today)}
         nextDisabled={isToday}
         isCurrent={isToday}
       />
-      {entry === undefined ? null : isToday ? (
-        <TodayForm key={date} date={date} entry={entry ?? undefined} />
-      ) : (
-        <PastDay date={date} entry={entry ?? undefined} />
-      )}
+      {entry !== undefined && <DayForm key={date} date={date} isToday={isToday} entry={entry ?? undefined} />}
     </div>
   );
 }
@@ -54,7 +55,9 @@ function DayCard({ date, rating, emoji }: { date: string; rating?: Rating; emoji
       style={color ? { backgroundColor: color } : undefined}
     >
       <div className="flex-1">
-        <p className="text-sm font-medium opacity-80">{format(fromKey(date), "EEEE, MMMM d")}</p>
+        <p className="text-sm font-medium opacity-80">
+          {format(fromKey(date), fromKey(date).getFullYear() === new Date().getFullYear() ? "EEEE, MMMM d" : "EEEE, MMMM d, yyyy")}
+        </p>
         <p className="text-3xl font-bold">{rating ? RATING_LABELS[rating] : "Not rated"}</p>
       </div>
       {emoji && <span className="text-5xl">{emoji}</span>}
@@ -62,7 +65,7 @@ function DayCard({ date, rating, emoji }: { date: string; rating?: Rating; emoji
   );
 }
 
-function TodayForm({ date, entry }: { date: string; entry?: DayEntry }) {
+function DayForm({ date, isToday, entry }: { date: string; isToday: boolean; entry?: DayEntry }) {
   const [rating, setRating] = useState<Rating | undefined>(entry?.rating);
   const [emoji, setEmoji] = useState<string | undefined>(entry?.emoji);
   const [note, setNote] = useState(entry?.note ?? "");
@@ -74,7 +77,7 @@ function TodayForm({ date, entry }: { date: string; entry?: DayEntry }) {
     if (!next.rating) return; // nothing to save until a rating is picked
     setStatus("saving");
     try {
-      await upsertToday(date, { rating: next.rating, emoji: next.emoji, note: next.note });
+      await upsertDay(date, { rating: next.rating, emoji: next.emoji, note: next.note });
       setStatus("saved");
     } catch (e) {
       console.error(e);
@@ -87,7 +90,7 @@ function TodayForm({ date, entry }: { date: string; entry?: DayEntry }) {
       <DayCard date={date} rating={rating} emoji={emoji} />
       <section className="space-y-6 rounded-2xl border border-border bg-surface p-5">
         <div>
-          <h2 className="mb-3 text-sm font-medium text-muted">How was your day?</h2>
+          <h2 className="mb-3 text-sm font-medium text-muted">{isToday ? "How was your day?" : "How was this day?"}</h2>
           <RatingPicker
             value={rating}
             onChange={(r) => {
@@ -119,7 +122,7 @@ function TodayForm({ date, entry }: { date: string; entry?: DayEntry }) {
               void save({ rating, emoji, note: e.target.value });
             }}
             rows={4}
-            placeholder="What made today what it was?"
+            placeholder={isToday ? "What made today what it was?" : "What made this day what it was?"}
             className="w-full resize-y rounded-lg border border-border bg-bg p-3 outline-none focus:border-fg"
           />
           <div className="mt-1 flex justify-between text-xs text-muted">
@@ -132,29 +135,13 @@ function TodayForm({ date, entry }: { date: string; entry?: DayEntry }) {
                     ? "Couldn't save. Try again."
                     : status === "saved"
                       ? "Saved"
-                      : "You can change this until midnight."}
+                      : ""}
             </span>
             <span>
               {note.length}/{NOTE_MAX}
             </span>
           </div>
         </div>
-      </section>
-    </>
-  );
-}
-
-function PastDay({ date, entry }: { date: string; entry?: DayEntry }) {
-  return (
-    <>
-      <DayCard date={date} rating={entry?.rating} emoji={entry?.emoji} />
-      <section className="rounded-2xl border border-border bg-surface p-5">
-        {entry?.note ? (
-          <p className="whitespace-pre-wrap break-words">{entry.note}</p>
-        ) : (
-          <p className="text-muted">{entry ? "No note." : "This day wasn't rated."}</p>
-        )}
-        <p className="mt-4 text-xs text-muted">Past days are read-only.</p>
       </section>
     </>
   );

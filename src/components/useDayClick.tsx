@@ -1,22 +1,16 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useCallback, useState } from "react";
-import { DayDetailSheet } from "./DayDetailSheet";
+import { useCallback } from "react";
 
-/** Today → Day page for editing; past → read-only sheet. Future tiles are disabled. */
+/** Opens the Day editor for today or a past day. Future tiles are disabled. */
 export function useDayClick(today: string) {
   const router = useRouter();
-  const [detail, setDetail] = useState<string | null>(null);
-
-  const onDayClick = useCallback(
+  return useCallback(
     (key: string) => {
       if (key === today) router.push("/day");
-      else if (key < today) setDetail(key);
+      else if (key < today) router.push(`/day?date=${key}`);
     },
     [today, router],
   );
-
-  const sheet = <DayDetailSheet date={detail} onClose={() => setDetail(null)} />;
-  return { onDayClick, sheet };
 }
